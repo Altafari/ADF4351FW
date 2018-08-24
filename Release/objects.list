@@ -20,6 +20,7 @@
 "Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_core.o"
 "Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ctlreq.o"
 "Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ioreq.o"
+"Src/data_sender.o"
 "Src/main.o"
 "Src/stm32f1xx_hal_msp.o"
 "Src/stm32f1xx_it.o"
