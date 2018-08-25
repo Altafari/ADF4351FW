@@ -29,7 +29,8 @@ typedef struct
 	volatile uint8_t *pFrameState;
 } IC_SENDER_StateTypeDef;
 
-static void SendData(uint8_t* pData, SPI_HandleTypeDef *hspi);
+void ProcessDataAsync(SPI_HandleTypeDef *hspi);
 uint8_t StartDataProcessingAsync(uint8_t* pFrame, uint8_t nBytesReceived);
+void ContinueSendingData(SPI_HandleTypeDef *hspi);
 
 #endif /* DATA_SENDER_H_ */

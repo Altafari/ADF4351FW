@@ -344,6 +344,7 @@ static uint8_t  USBD_CUSTOM_HID_Setup (USBD_HandleTypeDef *pdev,
     
     case CUSTOM_HID_REQ_SET_REPORT:
       hhid->IsReportAvailable = 1;
+      hhid->PacketLength = req->wLength;
       USBD_CtlPrepareRx (pdev, hhid->Report_buf, (uint8_t)(req->wLength));
       
       break;

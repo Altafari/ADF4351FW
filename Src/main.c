@@ -50,6 +50,7 @@
 #include "main.h"
 #include "stm32f1xx_hal.h"
 #include "usb_device.h"
+#include "data_sender.h"
 
 /* USER CODE BEGIN Includes */
 
@@ -81,13 +82,15 @@ static void MX_SPI1_Init(void);
 /* USER CODE END PFP */
 
 /* USER CODE BEGIN 0 */
-void HAL_IncTick() {
-	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_6, GPIO_PIN_RESET);
-	HAL_SPI_Transmit_DMA(&hspi1, (uint8_t*)"\x01\x03\x07\x1F", 4);
+
+void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi)
+{
+	ContinueSendingData(hspi);
 }
 
-void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi) {
-	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_6, GPIO_PIN_SET);
+void HAL_SYSTICK_Callback(void)
+{
+	ProcessDataAsync(&hspi1);
 }
 /* USER CODE END 0 */
 

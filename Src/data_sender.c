@@ -13,16 +13,30 @@
 IC_SENDER_StateTypeDef sender_state;
 IC_CTRL_DataFrameTypeDef data_frame[2];	// Double buffers for simple multithreading
 
-void SendData(uint8_t* pData, SPI_HandleTypeDef *hspi)
+static void SendData(uint8_t* pData, SPI_HandleTypeDef *hspi)
 {
 	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_6, GPIO_PIN_RESET);
 	HAL_SPI_Transmit_DMA(hspi, pData, 4);
 }
 
+static void StartDataTransfer(uint8_t frameIdx, SPI_HandleTypeDef *hspi)
+{
+	data_frame[frameIdx].state = IN_PROGRESS;
+	sender_state.pFrameState = &(data_frame[frameIdx].state);
+	sender_state.pFrameData = &(data_frame[frameIdx].buffer[5]);	// TODO: add buffer offset
+	sender_state.nFramesLeft = data_frame[frameIdx].buffer[4];
+	SendData(sender_state.pFrameData, hspi);
+}
+
+static uint8_t CheckDataIntegrity(uint8_t *pFrame, uint8_t nBytesReceived)
+{
+	return 0;
+}
+
 // Called from interrupt routine
 uint8_t StartDataProcessingAsync(uint8_t* pFrame, uint8_t nBytesReceived)
 {
-	if (!CheckDataIntegrity(pFrame, nBytesReceived)) return -1;
+	if (CheckDataIntegrity(pFrame, nBytesReceived)) return -1;
 	uint8_t frameToWriteIdx;
 	if (data_frame[0].state == IN_PROGRESS)	// Two buffers can't be processed simultaneously, so check the first one
 	{
@@ -38,15 +52,6 @@ uint8_t StartDataProcessingAsync(uint8_t* pFrame, uint8_t nBytesReceived)
 	return 0;
 }
 
-void StartDataTransfer(uint8_t frameIdx, SPI_HandleTypeDef *hspi)
-{
-	data_frame[frameIdx].state = IN_PROGRESS;
-	sender_state.pFrameState = &(data_frame[frameIdx].state);
-	sender_state.pFrameData = &(data_frame[frameIdx].buffer[5]);	// TODO: add buffer offset
-	sender_state.nFramesLeft = data_frame[frameIdx].buffer[4];
-	SendData(sender_state.pFrameData, hspi);
-}
-
 // Called from DMA completion routine
 void ContinueSendingData(SPI_HandleTypeDef *hspi)
 {
@@ -56,11 +61,11 @@ void ContinueSendingData(SPI_HandleTypeDef *hspi)
 		SendData(sender_state.pFrameData, hspi);
 		sender_state.nFramesLeft -= 1;
 		sender_state.pFrameData += 4;
-		if (sender_state.nFramesLeft == 0)
-		{
-			HAL_GPIO_WritePin(GPIOA, GPIO_PIN_6, GPIO_PIN_SET);
-			*(sender_state.pFrameState) = DONE;	// Mark current buffer as done
-		}
+	}
+	else
+	{
+		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_6, GPIO_PIN_SET);
+		*(sender_state.pFrameState) = DONE;	// Mark current buffer as done
 	}
 }
 
